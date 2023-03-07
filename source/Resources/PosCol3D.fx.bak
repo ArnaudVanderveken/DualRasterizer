@@ -1,0 +1,274 @@
+
+
+//---------------------------------------
+// Global Variables
+//---------------------------------------
+float4x4 gWorldViewProj : WorldViewProjection;
+float4x4 gWorldMatrix : WorldMatrix;
+float4x4 gViewInverseMatrix : ViewInverseMatrix;
+
+Texture2D gDiffuseMap : DiffuseMap;
+Texture2D gNormalMap : NormalMap;
+Texture2D gSpecularMap : SpecularMap;
+Texture2D gGlossinessMap : GlossinessMap;
+
+static float3 gLightDirection = float3(0.577f, -0.577f, 0.577f);
+static float gLightIntensity = float(7.f);
+static float gShininess = float(25.f);
+
+
+float gPI = float(3.14159265358979323846264f);
+float4 gAmbientLight = float4(0.05f, 0.05f, 0.05f, 1.f);
+
+//---------------------------------------
+// Input/Output Structs
+//---------------------------------------
+struct VS_INPUT
+{
+	float3 Position : POSITION;
+	float4 WorldPosition : COLOR;
+	float2 UV : TEXCOORD;
+	float3 Normal : NORMAL;
+	float3 Tangent : TANGENT;
+};
+
+struct VS_OUTPUT
+{
+	float4 Position : SV_POSITION;
+	float4 WorldPosition : COLOR;
+	float2 UV : TEXCOORD;
+	float3 Normal : NORMAL;
+	float3 Tangent : TANGENT;
+};
+
+//---------------------------------------
+// Function Declarations
+//---------------------------------------
+float4 PointPhong(VS_OUTPUT input, float4 color, float3 trueNormal);
+float4 LinearPhong(VS_OUTPUT input, float4 color, float3 trueNormal);
+float4 AnisotropicPhong(VS_OUTPUT input, float4 color, float3 trueNormal);
+
+float4 MaxToOne(float4 color);
+
+//---------------------------------------
+// SamplerStructs
+//---------------------------------------
+
+// POINT FILTER
+SamplerState samPoint
+{
+	Filter = MIN_MAG_MIP_POINT;
+	AddressU = wrap;
+	AddressV = Clamp;
+	BorderColor = float4(0.0f, 0.0f, 1.0f, 1.0f);
+};
+// LINEAR FILTER
+SamplerState samLinear
+{
+	Filter = MIN_MAG_MIP_LINEAR;
+	AddressU = Border;
+	AddressV = Clamp;
+	BorderColor = float4(0.0f, 0.0f, 1.0f, 1.0f);
+};
+// ANISOTROPIC FILTER
+SamplerState samAnisotropic
+{
+	Filter = ANISOTROPIC;
+	AddressU = Border;
+	AddressV = Clamp;
+	BorderColor = float4(0.0f, 0.0f, 1.0f, 1.0f);
+};
+
+//---------------------------------------
+// RasterizerStates
+//---------------------------------------
+RasterizerState gRasterizerState
+{
+	CullMode = back;
+	FrontCounterClockwise = true;
+};
+//---------------------------------------
+// Vertex Shader
+//---------------------------------------
+VS_OUTPUT VS(VS_INPUT input)
+{
+	VS_OUTPUT output = (VS_OUTPUT)0;
+	output.Position = mul(float4(input.Position, 1.f), gWorldViewProj);
+	output.WorldPosition = input.WorldPosition;
+	output.UV = input.UV;
+	output.Normal = input.Normal;
+	output.Tangent = input.Tangent;
+	return output;
+}
+
+//---------------------------------------
+// Pixel Shaders
+//---------------------------------------
+
+// POINT FILTER
+float4 PSPoint(VS_OUTPUT input) : SV_TARGET
+{
+	float4 color = float4(gDiffuseMap.Sample(samPoint, input.UV));
+	
+	// Normal Calculations
+	float3 binormal = cross(input.Tangent, input.Normal);
+	float3x3 tangentSpaceAxis = float3x3(input.Tangent, binormal, input.Normal);
+	float4 normalSample = float4(gNormalMap.Sample(samPoint, input.UV));
+	float3 trueNormal = float3(mul(float3(2 * normalSample.x - 1, 2 * normalSample.y - 1, 2 * normalSample.z - 1), tangentSpaceAxis));
+	
+
+	color = PointPhong(input, color, trueNormal);
+
+	color += gAmbientLight;
+	
+	return MaxToOne(color);
+}
+// LINEAR FILTER
+float4 PSLinear(VS_OUTPUT input) : SV_TARGET
+{
+	float4 color = float4(gDiffuseMap.Sample(samLinear, input.UV));
+	
+	// Normal Calculations
+	float3 binormal = cross(input.Tangent, input.Normal);
+	float3x3 tangentSpaceAxis = float3x3(input.Tangent, binormal, input.Normal);
+	float4 normalSample = float4(gNormalMap.Sample(samLinear, input.UV));
+	float3 trueNormal = float3(mul(float3(2 * normalSample.x - 1, 2 * normalSample.y - 1, 2 * normalSample.z - 1), tangentSpaceAxis));
+	
+
+	color = LinearPhong(input, color, trueNormal);
+
+	color += gAmbientLight;
+	
+	return MaxToOne(color);
+}
+// ANISOTROPIC PHONG FILTER
+float4 PSAnisotropic(VS_OUTPUT input) : SV_TARGET
+{
+	float4 color = float4(gDiffuseMap.Sample(samAnisotropic, input.UV));
+	
+	// Normal Calculations
+	float3 binormal = cross(input.Tangent, input.Normal);
+	float3x3 tangentSpaceAxis = float3x3(input.Tangent, binormal, input.Normal);
+	float4 normalSample = float4(gNormalMap.Sample(samAnisotropic, input.UV));
+	float3 trueNormal = float3(mul(float3(2 * normalSample.x - 1, 2 * normalSample.y - 1, 2 * normalSample.z - 1), tangentSpaceAxis));
+	
+
+	color = AnisotropicPhong(input, color, trueNormal);
+	
+	color += gAmbientLight;
+	
+	return MaxToOne(color);
+}
+
+//---------------------------------------
+// Techniques
+//---------------------------------------
+
+// Point FILTER
+technique11 PointTechnique
+{
+	pass P0
+	{
+		SetRasterizerState(gRasterizerState);
+		SetVertexShader(CompileShader(vs_5_0,VS()));
+		SetGeometryShader(NULL);
+		SetPixelShader(CompileShader(ps_5_0,PSPoint()));
+	}
+}
+// LINEAR FILTER
+technique11 LinearTechnique
+{
+	pass P0
+	{
+		SetRasterizerState(gRasterizerState);
+		SetVertexShader(CompileShader(vs_5_0,VS()));
+		SetGeometryShader(NULL);
+		SetPixelShader(CompileShader(ps_5_0,PSLinear()));
+	}
+}
+// ANISOTROPIC FILTER
+technique11 AnisotropicTechnique
+{
+	pass P0
+	{
+		SetRasterizerState(gRasterizerState);
+		SetVertexShader(CompileShader(vs_5_0,VS()));
+		SetGeometryShader(NULL);
+		SetPixelShader(CompileShader(ps_5_0,PSAnisotropic()));
+	}
+}
+
+
+//---------------------------------------
+// FUNCTIONS
+//---------------------------------------
+float4 PointPhong(VS_OUTPUT input, float4 color, float3 trueNormal)
+{
+	float4 newColor = color;
+
+	float3 viewDirection = normalize(input.WorldPosition.xyz - gViewInverseMatrix[3].xyz);
+	
+	float3 reflect = gLightDirection - (2.f * dot(trueNormal, gLightDirection) * trueNormal);
+	float cos = dot(reflect, viewDirection);
+	
+	if (cos > 0)
+	{
+		float4 specular = float4(gSpecularMap.Sample(samPoint, input.UV));
+		float exp = gGlossinessMap.Sample(samPoint, input.UV).x;
+
+	
+		newColor += float4(specular * pow(cos, exp * gShininess));
+	}
+	
+	return newColor;
+}
+float4 LinearPhong(VS_OUTPUT input, float4 color, float3 trueNormal)
+{
+	float4 newColor = color;
+
+	float3 viewDirection = normalize(input.WorldPosition.xyz - gViewInverseMatrix[3].xyz);
+	
+	float3 reflect = gLightDirection - (2.f * dot(trueNormal, gLightDirection) * trueNormal);
+	float cos = dot(reflect, viewDirection);
+	
+	if (cos > 0)
+	{
+		float4 specular = float4(gSpecularMap.Sample(samLinear, input.UV));
+		float exp = gGlossinessMap.Sample(samLinear, input.UV).x;
+
+	
+		newColor += float4(specular * pow(cos, exp * gShininess));
+	}
+	
+	return newColor;
+}
+float4 AnisotropicPhong(VS_OUTPUT input, float4 color, float3 trueNormal)
+{
+	float4 newColor = color;
+
+	float3 viewDirection = normalize(input.WorldPosition.xyz - gViewInverseMatrix[3].xyz);
+	
+	float3 reflect = gLightDirection - (2.f * dot(trueNormal, gLightDirection) * trueNormal);
+	float cos = dot(reflect, viewDirection);
+	
+	if (cos > 0)
+	{
+		float4 specular = float4(gSpecularMap.Sample(samAnisotropic, input.UV));
+		float exp = gGlossinessMap.Sample(samAnisotropic, input.UV).x;
+
+	
+		newColor += float4(specular * pow(cos, exp * gShininess));
+	}
+	
+	return newColor;
+}
+
+float4 MaxToOne(float4 color)
+{
+	float4 newColor = color;
+	
+	//newColor = normalize(newColor);
+	//newColor.w = 1.f;
+	
+	return newColor;
+}
