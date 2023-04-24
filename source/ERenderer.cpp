@@ -14,10 +14,10 @@ Elite::Renderer::Renderer(SDL_Window * pWindow, Elite::Camera* pCamera)
 	, m_Width{}
 	, m_Height{}
 	, m_IsInitialized{ false }
-	, m_IsRotating{ true }
+	, m_pCamera{ pCamera }
 	, m_Angle{}
 	, m_RotateSpeed{ -Elite::ToRadians(45.f) }
-	, m_pCamera{ pCamera }
+	, m_IsRotating{ true }
 	, m_ShowFireFX{ true }
 {
 	int width, height = 0;
@@ -58,32 +58,21 @@ Elite::Renderer::~Renderer()
 	delete[] m_DepthBuffer;
 
 	// DirectX
-	delete m_pVehicle;
-	delete m_pDiffuseMap;
-	delete m_pNormalMap;
-	delete m_pSpecularMap;
-	delete m_pGlossinessMap;
+	if (m_pVehicle) delete m_pVehicle;
+	if (m_pDiffuseMap) delete m_pDiffuseMap;
+	if (m_pNormalMap) delete m_pNormalMap;
+	if (m_pSpecularMap) delete m_pSpecularMap;
+	if (m_pGlossinessMap) delete m_pGlossinessMap;
 
-	delete m_pFireFX;
-	delete m_pFireFXDiffuse;
+	if (m_pFireFX) delete m_pFireFX;
+	if (m_pFireFXDiffuse) delete m_pFireFXDiffuse;
 
-	if (m_pRenderTargetView)
-		m_pRenderTargetView->Release();
-
-	if (m_pRenderTargetBuffer)
-		m_pRenderTargetBuffer->Release();
-
-	if (m_pDepthStencilView)
-		m_pDepthStencilView->Release();
-
-	if (m_pDepthStencilBuffer)
-		m_pDepthStencilBuffer->Release();
-
-	if (m_pSwapChain)
-		m_pSwapChain->Release();
-
-	if (m_pDXGIFactory)
-		m_pDXGIFactory->Release();
+	if (m_pRenderTargetView) m_pRenderTargetView->Release();
+	if (m_pRenderTargetBuffer) m_pRenderTargetBuffer->Release();
+	if (m_pDepthStencilView) m_pDepthStencilView->Release();
+	if (m_pDepthStencilBuffer) m_pDepthStencilBuffer->Release();
+	if (m_pSwapChain) m_pSwapChain->Release();
+	if (m_pDXGIFactory) m_pDXGIFactory->Release();
 
 	if (m_pDeviceContext) 
 	{
@@ -91,8 +80,7 @@ Elite::Renderer::~Renderer()
 		m_pDeviceContext->Flush();
 		m_pDeviceContext->Release();
 	}
-	if (m_pDevice)
-		m_pDevice->Release();
+	if (m_pDevice) m_pDevice->Release();
 }
 
 void Elite::Renderer::Render()
@@ -103,18 +91,18 @@ void Elite::Renderer::Render()
 			return;
 
 		//Clear Buffers
-		const RGBColor clearColor = RGBColor(0.1f, 0.1f, 0.1f);
+		RGBColor clearColor = RGBColor(0.1f, 0.1f, 0.1f);
 		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		// Initialize Variables
-		const FVector3 vehiclePos = m_pVehicle->GetPosition();
+		FVector3 vehiclePos = m_pVehicle->GetPosition();
 
 		FMatrix4 world = (FMatrix4)Elite::MakeTranslation(vehiclePos);
-		world *= FMatrix4(Elite::MakeRotationY(m_Angle));
+		world *= (FMatrix4)Elite::MakeRotationY(m_Angle);
 
-		const FMatrix4 worldViewPort = m_pCamera->GetWorldViewProjection();
-		const FMatrix4 viewInv = m_pCamera->GetViewToWorld();
+		FMatrix4 worldViewPort = m_pCamera->GetWorldViewProjection();
+		FMatrix4 viewInv = m_pCamera->GetViewToWorld();
 
 		// Render
 		m_pCamera->SetWorldMatrix(world);
@@ -152,7 +140,7 @@ void Elite::Renderer::Render()
 	}
 }
 
-void Elite::Renderer::Update(const float dt)
+void Elite::Renderer::Update(float dt)
 {
 	if (m_IsRotating) m_Angle += dt * m_RotateSpeed;
 }
@@ -355,7 +343,7 @@ void Elite::Renderer::InitializeDirectX()
 void Elite::Renderer::RenderTriangleMesh(Mesh* pMesh)
 {
 	std::vector<Vertex_Input> vertices{ pMesh->GetVertexBuffer() };
-	const std::vector<uint32_t> indexes{ pMesh->GetIndexBuffer() };
+	std::vector<uint32_t> indexes{ pMesh->GetIndexBuffer() };
 	for (size_t i = 0; i < indexes.size() - 2; i += 3)
 	{
 		pMesh->SetTemplateVertices({ vertices[indexes[i]], vertices[indexes[i + 1]], vertices[indexes[i + 2]] });
@@ -399,7 +387,7 @@ void Elite::Renderer::RenderTriangle(Triangle* pTriangle)
 		{
 			Elite::RGBColor color{ 0,0,0 };
 
-			Elite::FPoint2 pixelPos{ float(c) + 0.5f, float(r) + 0.5f }; // + 0.5f for center of pixel
+			Elite::FPoint2 pixelPos{ (float)c + 0.5f, (float)r + 0.5f }; // + 0.5f for center of pixel
 			Elite::FPoint2 v0{ transformedVertices[0].Position.xy };
 			Elite::FPoint2 v1{ transformedVertices[1].Position.xy };
 			Elite::FPoint2 v2{ transformedVertices[2].Position.xy };
@@ -470,16 +458,16 @@ void Elite::Renderer::VertexShader(const std::vector<Vertex_Input>& inputVertice
 	}
 }
 
-Elite::RGBColor Elite::Renderer::PixelShader(const Elite::RGBColor& diffuse, const Elite::RGBColor& specular, const Elite::RGBColor& ambient, float phongExponent, const Elite::FVector3& normal, const Elite::FVector3& viewDirection) const
+Elite::RGBColor Elite::Renderer::PixelShader(const Elite::RGBColor& diffuse, const Elite::RGBColor& specular, const Elite::RGBColor& ambient, float phongExponent, const Elite::FVector3& normal, const Elite::FVector3& viewDirection)
 {
-	constexpr float shininess{ 25.0f };
+	const float shininess{ 25.0f };
 	const FVector3 lightDirection = { 0.577f, -0.577f, 0.577f };
-	constexpr float lightIntensity = 7.0f / float(E_PI);
+	const float lightIntensity = 7.0f / (float)E_PI;
 	const Elite::RGBColor lightColor = { 1.0f, 1.0f, 1.0f };
 
 	Elite::RGBColor finalColor = diffuse * (lightColor * lightIntensity * std::max(Elite::Dot(-normal, lightDirection), 0.0f)) + ambient;
 
-	const float dotProduct = Elite::Dot(lightDirection - (2 * Elite::Dot(normal, lightDirection) * normal), viewDirection);
+	float dotProduct = Elite::Dot(lightDirection - (2 * Elite::Dot(normal, lightDirection) * normal), viewDirection);
 
 	if (dotProduct > 0)
 	{
@@ -491,7 +479,7 @@ Elite::RGBColor Elite::Renderer::PixelShader(const Elite::RGBColor& diffuse, con
 	return finalColor;
 }
 
-Elite::IVector4 Elite::Renderer::GetBoundingBox(const std::vector<Vertex_Input>& vertices) const
+Elite::IVector4 Elite::Renderer::GetBoundingBox(const std::vector<Vertex_Input>& vertices)
 {
 	// Bounding Box
 		// x = minX
@@ -502,21 +490,21 @@ Elite::IVector4 Elite::Renderer::GetBoundingBox(const std::vector<Vertex_Input>&
 
 	for (const Vertex_Input& vertex : vertices)
 	{
-		boundingBox.x = std::min(boundingBox.x, int(vertex.Position.x));
-		boundingBox.y = std::max(boundingBox.y, int(vertex.Position.x) + 1);
-		boundingBox.z = std::min(boundingBox.z, int(vertex.Position.y));
-		boundingBox.w = std::max(boundingBox.w, int(vertex.Position.y) + 1);
+		boundingBox.x = std::min(boundingBox.x, (int)vertex.Position.x);
+		boundingBox.y = std::max(boundingBox.y, (int)vertex.Position.x + 1);
+		boundingBox.z = std::min(boundingBox.z, (int)vertex.Position.y);
+		boundingBox.w = std::max(boundingBox.w, (int)vertex.Position.y + 1);
 	}
 	// Clamp 
 	boundingBox.x = std::max(boundingBox.x, 0);
-	boundingBox.y = std::min(boundingBox.y, int(m_Width));
+	boundingBox.y = std::min(boundingBox.y, (int)m_Width);
 	boundingBox.z = std::max(boundingBox.z, 0);
-	boundingBox.w = std::min(boundingBox.w, int(m_Height));
+	boundingBox.w = std::min(boundingBox.w, (int)m_Height);
 
 	return boundingBox;
 }
 
-bool Elite::Renderer::IsPointInTriangle(const float w0, const float w1, const float w2) const
+bool Elite::Renderer::IsPointInTriangle(float w0, float w1, float w2) const
 {
 	switch (m_CullMode)
 	{
@@ -531,7 +519,7 @@ bool Elite::Renderer::IsPointInTriangle(const float w0, const float w1, const fl
 	}
 }
 
-void Elite::Renderer::ResetDepthBuffer() const
+void Elite::Renderer::ResetDepthBuffer()
 {
 	for (uint32_t i = 0; i < m_Height * m_Width; i++)
 		m_DepthBuffer[i] = FLT_MAX;

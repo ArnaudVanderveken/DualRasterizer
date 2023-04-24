@@ -6,7 +6,7 @@ class BaseEffect abstract
 {
 public:
 	BaseEffect(ID3D11Device* pDevice, std::wstring assetFile);
-	virtual ~BaseEffect();
+	~BaseEffect();
 
 	BaseEffect(const BaseEffect&) = delete;
 	BaseEffect(BaseEffect&&) noexcept = delete;

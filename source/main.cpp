@@ -21,6 +21,13 @@ void ShutDown(SDL_Window* pWindow)
 	SDL_Quit();
 }
 
+void DisplayControls()
+{
+	using std::cout;
+	using std::endl;
+	cout << "Controls:\n\tSwitch Renderer: E\n\tSwitch CullMode: C\n\tSwitch SampleFilter: F\n\tToggle Rotation: R\n\tToggle FireFX (DirectX only): T" << endl;
+}
+
 int main(int argc, char* args[])
 {
 	//Unreferenced parameters
@@ -47,6 +54,8 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	auto pTimer{ std::make_unique<Elite::Timer>() };
 	auto pRenderer{ std::make_unique<Elite::Renderer>(pWindow, pCamera.get()) };
+
+	DisplayControls();
 
 	//Start loop
 	pTimer->Start();

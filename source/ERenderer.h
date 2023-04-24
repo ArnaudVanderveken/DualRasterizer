@@ -61,14 +61,14 @@ namespace Elite
 		float* m_DepthBuffer;
 		uint32_t* m_pBackBufferPixels = nullptr;
 
-		ID3D11Device* m_pDevice{};
-		ID3D11DeviceContext* m_pDeviceContext{};
-		IDXGIFactory* m_pDXGIFactory{};
-		IDXGISwapChain* m_pSwapChain{};
-		ID3D11Texture2D* m_pDepthStencilBuffer{};
-		ID3D11DepthStencilView* m_pDepthStencilView{};
-		ID3D11Resource* m_pRenderTargetBuffer{};
-		ID3D11RenderTargetView* m_pRenderTargetView{};
+		ID3D11Device* m_pDevice;
+		ID3D11DeviceContext* m_pDeviceContext;
+		IDXGIFactory* m_pDXGIFactory;
+		IDXGISwapChain* m_pSwapChain;
+		ID3D11Texture2D* m_pDepthStencilBuffer;
+		ID3D11DepthStencilView* m_pDepthStencilView;
+		ID3D11Resource* m_pRenderTargetBuffer;
+		ID3D11RenderTargetView* m_pRenderTargetView;
 
 		SampleMode m_SampleMode = SampleMode::point;
 		CullMode m_CullMode = CullMode::backface;
@@ -91,11 +91,11 @@ namespace Elite
 		// Member Functions
 		void InitializeDirectX();
 		void RenderTriangleMesh(Mesh* pMesh);
-		void ResetDepthBuffer() const;
+		void ResetDepthBuffer();
 		void RenderTriangle(Triangle* pTriangle);
 		void VertexShader(const std::vector<Vertex_Input>& inputVertices, std::vector<Vertex_Input>& outputVertices) const;
-		Elite::RGBColor PixelShader(const Elite::RGBColor& diffuse, const Elite::RGBColor& specular, const Elite::RGBColor& ambient, float phongExponent, const Elite::FVector3& normal, const Elite::FVector3& viewDirection) const;
-		Elite::IVector4 GetBoundingBox(const std::vector<Vertex_Input>& vertices) const;
+		Elite::RGBColor PixelShader(const Elite::RGBColor& diffuse, const Elite::RGBColor& specular, const Elite::RGBColor& ambient, float phongExponent, const Elite::FVector3& normal, const Elite::FVector3& viewDirection);
+		Elite::IVector4 GetBoundingBox(const std::vector<Vertex_Input>& vertices);
 		bool IsPointInTriangle(float w0, float w1, float w2) const;
 	};
 }
