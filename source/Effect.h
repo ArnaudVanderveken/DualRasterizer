@@ -5,7 +5,7 @@
 class Effect final : public BaseEffect
 {
 public:
-	Effect(ID3D11Device* pDevice, std::wstring assetFile);
+	Effect(ID3D11Device* pDevice, const std::wstring& assetFile);
 	~Effect() override;
 
 	Effect(const Effect&) = delete;
@@ -13,7 +13,7 @@ public:
 	Effect& operator=(const Effect&) = delete;
 	Effect& operator=(Effect&&) noexcept = delete;
 
-	virtual void SetTechnique(SampleMode renderTechnique) override;
+	void SetTechnique(SampleMode renderTechnique) override;
 
 private:
 

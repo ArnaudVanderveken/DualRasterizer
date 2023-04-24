@@ -1,9 +1,8 @@
-#pragma once
 #include "pch.h"
 #include "BaseEffect.h"
 #include <sstream>
 
-BaseEffect::BaseEffect(ID3D11Device* pDevice, std::wstring assetFile)
+BaseEffect::BaseEffect(ID3D11Device* pDevice, const std::wstring& assetFile)
 {
 	m_pEffect = LoadEffect(pDevice, assetFile);
 }
@@ -13,17 +12,17 @@ BaseEffect::~BaseEffect()
 	m_pEffect->Release();
 }
 
-ID3DX11Effect* BaseEffect::GetEffect()
+ID3DX11Effect* BaseEffect::GetEffect() const
 {
 	return m_pEffect;
 }
 
-ID3DX11EffectTechnique* BaseEffect::GetTechnique()
+ID3DX11EffectTechnique* BaseEffect::GetTechnique() const
 {
 	return m_pActiveTechnique;
 }
 
-ID3DX11EffectVariable* BaseEffect::GetVariableByName(LPCSTR name)
+ID3DX11EffectVariable* BaseEffect::GetVariableByName(LPCSTR name) const
 {
 	return m_pEffect->GetVariableByName(name);
 }
@@ -51,7 +50,7 @@ ID3DX11Effect* BaseEffect::LoadEffect(ID3D11Device* pDevice, const std::wstring&
 	{
 		if (pErrorBlob != nullptr)
 		{
-			char* pErrors = (char*)pErrorBlob->GetBufferPointer();
+			auto pErrors = static_cast<char*>(pErrorBlob->GetBufferPointer());
 
 			std::wstringstream ss;
 			for (unsigned int i = 0; i < pErrorBlob->GetBufferSize(); i++)

@@ -2,7 +2,7 @@
 #include <sstream>
 #include "Effect.h"
 
-Effect::Effect(ID3D11Device* pDevice, std::wstring assetFile)
+Effect::Effect(ID3D11Device* pDevice, const std::wstring& assetFile)
 	: BaseEffect{pDevice, assetFile}
 {
 	m_pPointTechnique = m_pEffect->GetTechniqueByName("PointTechnique");
@@ -11,8 +11,10 @@ Effect::Effect(ID3D11Device* pDevice, std::wstring assetFile)
 
 	if (!m_pPointTechnique->IsValid())
 		std::wcout << L"Point Technique not valid\n";
+
 	if (!m_pLinearTechnique->IsValid())
 		std::wcout << L"Linear Technique not valid\n";
+
 	if (!m_pAnisotropicTechnique->IsValid())
 		std::wcout << L"Anisotropic Technique not valid\n";
 
@@ -33,11 +35,16 @@ void Effect::SetTechnique(SampleMode renderTechnique)
 	case SampleMode::point:
 		m_pActiveTechnique = m_pPointTechnique;
 		break;
+
 	case SampleMode::linear:
 		m_pActiveTechnique = m_pLinearTechnique;
 		break;
+
 	case SampleMode::anisotropic:
 		m_pActiveTechnique = m_pAnisotropicTechnique;
+		break;
+
+	default:
 		break;
 	}
 }

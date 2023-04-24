@@ -5,7 +5,7 @@
 class BaseEffect abstract
 {
 public:
-	BaseEffect(ID3D11Device* pDevice, std::wstring assetFile);
+	BaseEffect(ID3D11Device* pDevice, const std::wstring& assetFile);
 	virtual ~BaseEffect();
 
 	BaseEffect(const BaseEffect&) = delete;
@@ -13,9 +13,9 @@ public:
 	BaseEffect& operator=(const BaseEffect&) = delete;
 	BaseEffect& operator=(BaseEffect&&) noexcept = delete;
 
-	ID3DX11Effect* GetEffect();
-	ID3DX11EffectTechnique* GetTechnique();
-	ID3DX11EffectVariable* GetVariableByName(LPCSTR name);
+	[[nodiscard]] ID3DX11Effect* GetEffect() const;
+	[[nodiscard]] ID3DX11EffectTechnique* GetTechnique() const;
+	[[nodiscard]] ID3DX11EffectVariable* GetVariableByName(LPCSTR name) const;
 
 	virtual void SetTechnique(SampleMode renderTechnique) = 0;
 

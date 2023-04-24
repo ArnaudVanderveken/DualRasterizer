@@ -5,7 +5,7 @@
 class EffectPartialCoverage final : public BaseEffect
 {
 public:
-	EffectPartialCoverage(ID3D11Device* pDevice, std::wstring assetFile);
+	EffectPartialCoverage(ID3D11Device* pDevice, const std::wstring& assetFile);
 	~EffectPartialCoverage() override;
 
 	EffectPartialCoverage(const EffectPartialCoverage&) = delete;
@@ -13,7 +13,7 @@ public:
 	EffectPartialCoverage& operator=(const EffectPartialCoverage&) = delete;
 	EffectPartialCoverage& operator=(EffectPartialCoverage&&) noexcept = delete;
 
-	virtual void SetTechnique(SampleMode renderTechnique) override;
+	void SetTechnique(SampleMode renderTechnique) override;
 
 private:
 
