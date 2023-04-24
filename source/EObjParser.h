@@ -18,7 +18,7 @@ namespace Elite
 {
 
 	//Just parses vertices and indices
-	static bool ParseOBJ(const std::string& filename, const Elite::FVector3 /*position*/, std::vector<Vertex_Input>& vertices, std::vector<uint32_t>& indices)
+	static bool ParseOBJ(const std::string& filename, const FVector3& /*position*/, std::vector<Vertex_Input>& vertices, std::vector<uint32_t>& indices)
 	{
 		std::ifstream file(filename);
 		if (!file.is_open())
@@ -44,21 +44,21 @@ namespace Elite
 				//Vertex
 				float x, y, z;
 				file >> x >> y >> z;
-				positions.push_back(FPoint4(x, y, -z));
+				positions.emplace_back(x, y, -z);
 			}
 			else if (sCommand == "vt")
 			{
 				// Vertex TexCoord
 				float u, v;
 				file >> u >> v;
-				UVs.push_back(FVector2(u, 1 - v));
+				UVs.emplace_back(FVector2(u, 1 - v));
 			}
 			else if (sCommand == "vn")
 			{
 				// Vertex Normal
 				float x, y, z;
 				file >> x >> y >> z;
-				normals.push_back(FVector3(x, y, -z));
+				normals.emplace_back(FVector3(x, y, -z));
 			}
 			else if (sCommand == "f")
 			{
@@ -97,8 +97,8 @@ namespace Elite
 						}
 					}
 
-					vertices.push_back(vertex);
-					indices.push_back(uint32_t(vertices.size()) - 1);
+					vertices.emplace_back(vertex);
+					indices.emplace_back(uint32_t(vertices.size()) - 1);
 				}
 			}
 			//read till end of line and ignore all remaining chars
@@ -111,18 +111,18 @@ namespace Elite
 			uint32_t index1 = indices[i + 1];
 			uint32_t index2 = indices[i + 2];
 
-			const Elite::FPoint3& p0 = vertices[index0].Position.xyz;
-			const Elite::FPoint3& p1 = vertices[index1].Position.xyz;
-			const Elite::FPoint3& p2 = vertices[index2].Position.xyz;
-			const Elite::FVector2& uv0 = vertices[index0].UV;
-			const Elite::FVector2& uv1 = vertices[index1].UV;
-			const Elite::FVector2& uv2 = vertices[index2].UV;
+			const FPoint3& p0 = vertices[index0].Position.xyz;
+			const FPoint3& p1 = vertices[index1].Position.xyz;
+			const FPoint3& p2 = vertices[index2].Position.xyz;
+			const FVector2& uv0 = vertices[index0].UV;
+			const FVector2& uv1 = vertices[index1].UV;
+			const FVector2& uv2 = vertices[index2].UV;
 
 			const FVector3 edge0 = p1 - p0;
 			const FVector3 edge1 = p2 - p0;
 			const FVector2 diffX = FVector2(uv1.x - uv0.x, uv2.x - uv0.x);
 			const FVector2 diffY = FVector2(uv1.y - uv0.y, uv2.y - uv0.y);
-			float r = 1.f / Elite::Cross(diffX, diffY);
+			float r = 1.f / Cross(diffX, diffY);
 
 			FVector3 tangent = (edge0 * diffY.y - edge1 * diffY.x) * r;
 			tangent.z *= -1.f;
@@ -132,10 +132,7 @@ namespace Elite
 			vertices[index2].Tangent += tangent;
 		}
 		for (auto& v : vertices)
-		{
 			v.Tangent = Elite::GetNormalized(Reject(v.Tangent, v.Normal));
-		}
-
 
 		return true;
 	}
