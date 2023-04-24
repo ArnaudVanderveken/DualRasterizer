@@ -27,7 +27,7 @@ namespace Elite
 	class Renderer final
 	{
 	public:
-		Renderer(SDL_Window* pWindow, Elite::Camera* pCamera);
+		Renderer(SDL_Window* pWindow, Camera* pCamera);
 		~Renderer();
 
 		Renderer(const Renderer&) = delete;
@@ -91,11 +91,11 @@ namespace Elite
 		// Member Functions
 		void InitializeDirectX();
 		void RenderTriangleMesh(Mesh* pMesh);
-		void ResetDepthBuffer();
+		void ResetDepthBuffer() const;
 		void RenderTriangle(Triangle* pTriangle);
 		void VertexShader(const std::vector<Vertex_Input>& inputVertices, std::vector<Vertex_Input>& outputVertices) const;
-		Elite::RGBColor PixelShader(const Elite::RGBColor& diffuse, const Elite::RGBColor& specular, const Elite::RGBColor& ambient, float phongExponent, const Elite::FVector3& normal, const Elite::FVector3& viewDirection);
-		Elite::IVector4 GetBoundingBox(const std::vector<Vertex_Input>& vertices);
+		Elite::RGBColor PixelShader(const RGBColor& diffuse, const RGBColor& specular, const RGBColor& ambient, float phongExponent, const FVector3& normal, const FVector3& viewDirection) const;
+		Elite::IVector4 GetBoundingBox(const std::vector<Vertex_Input>& vertices) const;
 		bool IsPointInTriangle(float w0, float w1, float w2) const;
 	};
 }
