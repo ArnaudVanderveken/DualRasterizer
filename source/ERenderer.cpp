@@ -29,7 +29,7 @@ Elite::Renderer::Renderer(SDL_Window * pWindow, Elite::Camera* pCamera)
 	m_DepthBuffer = new float[width * height]{};
 	ResetDepthBuffer();
 	m_pBackBuffer = SDL_CreateRGBSurface(0, m_Width, m_Height, 32, 0, 0, 0, 0);
-	m_pBackBufferPixels = static_cast<uint32_t*>(m_pBackBuffer->pixels);
+	m_pBackBufferPixels = (uint32_t*)m_pBackBuffer->pixels;
 
 	InitializeDirectX();
 	
@@ -110,24 +110,24 @@ void Elite::Renderer::Render()
 		// Initialize Variables
 		const FVector3 vehiclePos = m_pVehicle->GetPosition();
 
-		FMatrix4 world = MakeTranslation(vehiclePos);
-		world *= FMatrix4(MakeRotationY(m_Angle));
+		FMatrix4 world = (FMatrix4)Elite::MakeTranslation(vehiclePos);
+		world *= FMatrix4(Elite::MakeRotationY(m_Angle));
 
 		const FMatrix4 worldViewPort = m_pCamera->GetWorldViewProjection();
 		const FMatrix4 viewInv = m_pCamera->GetViewToWorld();
 
 		// Render
 		m_pCamera->SetWorldMatrix(world);
-		m_pVehicle->SetWorldViewMatrix(reinterpret_cast<const float*>(worldViewPort.data));
-		m_pVehicle->SetWorldMatrix(reinterpret_cast<const float*>(world.data));
-		m_pVehicle->SetViewInverseMatrix(reinterpret_cast<const float*>(viewInv.data));
+		m_pVehicle->SetWorldViewMatrix(reinterpret_cast<float*>(worldViewPort.data));
+		m_pVehicle->SetWorldMatrix(reinterpret_cast<float*>(world.data));
+		m_pVehicle->SetViewInverseMatrix(reinterpret_cast<float*>(viewInv.data));
 		m_pVehicle->Render(m_pDeviceContext);
 
 		if (m_ShowFireFX)
 		{
-			m_pFireFX->SetWorldViewMatrix(reinterpret_cast<const float*>(worldViewPort.data));
-			m_pFireFX->SetWorldMatrix(reinterpret_cast<const float*>(world.data));
-			m_pFireFX->SetViewInverseMatrix(reinterpret_cast<const float*>(viewInv.data));
+			m_pFireFX->SetWorldViewMatrix(reinterpret_cast<float*>(worldViewPort.data));
+			m_pFireFX->SetWorldMatrix(reinterpret_cast<float*>(world.data));
+			m_pFireFX->SetViewInverseMatrix(reinterpret_cast<float*>(viewInv.data));
 			m_pFireFX->Render(m_pDeviceContext);
 		}
 
@@ -154,8 +154,7 @@ void Elite::Renderer::Render()
 
 void Elite::Renderer::Update(const float dt)
 {
-	if (m_IsRotating)
-		m_Angle += dt * m_RotateSpeed;
+	if (m_IsRotating) m_Angle += dt * m_RotateSpeed;
 }
 
 void Elite::Renderer::SwitchSampleFilter()
@@ -167,15 +166,12 @@ void Elite::Renderer::SwitchSampleFilter()
 	case SampleMode::point:
 		std::cout << "POINT Sampling." << std::endl;
 		break;
-
 	case SampleMode::linear:
 		std::cout << "LINEAR Sampling." << std::endl;
 		break;
-
 	case SampleMode::anisotropic:
 		std::cout << "ANISOTROPIC Sampling." << std::endl;
 		break;
-
 	default:
 		std::cout << "Invalid SampleMode" << std::endl;
 		break;
@@ -194,15 +190,12 @@ void Elite::Renderer::SwitchCullMode()
 	case CullMode::backface:
 		std::cout << "BACKFACE culling." << std::endl;
 		break;
-
 	case CullMode::frontface:
 		std::cout << "FRONTFACE culling." << std::endl;
 		break;
-
 	case CullMode::none:
 		std::cout << "NO culling." << std::endl;
 		break;
-
 	default:
 		std::cout << "Invalid CullMode" << std::endl;
 		break;
@@ -221,11 +214,9 @@ void Elite::Renderer::SwitchRenderMode()
 	case RasterMode::hardware:
 		std::cout << "HARDWARE rasterization." << std::endl;
 		break;
-
 	case RasterMode::software:
 		std::cout << "SOFTWARE rasterization." << std::endl;
 		break;
-
 	default:
 		std::cout << "Invalid RasterMode" << std::endl;
 		break;
@@ -361,18 +352,18 @@ void Elite::Renderer::InitializeDirectX()
 	std::cout << "DirectX is ready!" << std::endl;
 }
 
-void Elite::Renderer::RenderTriangleMesh(Mesh* pMesh) const
+void Elite::Renderer::RenderTriangleMesh(Mesh* pMesh)
 {
 	std::vector<Vertex_Input> vertices{ pMesh->GetVertexBuffer() };
 	const std::vector<uint32_t> indexes{ pMesh->GetIndexBuffer() };
-	for (size_t i {}; i < indexes.size() - 2; i += 3)
+	for (size_t i = 0; i < indexes.size() - 2; i += 3)
 	{
 		pMesh->SetTemplateVertices({ vertices[indexes[i]], vertices[indexes[i + 1]], vertices[indexes[i + 2]] });
 		RenderTriangle(pMesh->GetTriangle());
 	}
 }
 
-void Elite::Renderer::RenderTriangle(Triangle* pTriangle) const
+void Elite::Renderer::RenderTriangle(Triangle* pTriangle)
 {
 	std::vector<Vertex_Input> transformedVertices;
 
@@ -399,25 +390,25 @@ void Elite::Renderer::RenderTriangle(Triangle* pTriangle) const
 	// y = maxX
 	// z = minY
 	// w = maxY
-	IVector4 boundingBox{ GetBoundingBox(transformedVertices) };
+	Elite::IVector4 boundingBox{ GetBoundingBox(transformedVertices) };
 
 	// Loop over all the pixels in the box
 	for (int r = boundingBox.z; r < boundingBox.w; ++r)
 	{
 		for (int c = boundingBox.x; c < boundingBox.y; ++c)
 		{
-			RGBColor color{ 0,0,0 };
+			Elite::RGBColor color{ 0,0,0 };
 
-			FPoint2 pixelPos{ float(c) + 0.5f, float(r) + 0.5f }; // + 0.5f for center of pixel
-			FPoint2 v0{ transformedVertices[0].Position.xy };
-			FPoint2 v1{ transformedVertices[1].Position.xy };
-			FPoint2 v2{ transformedVertices[2].Position.xy };
+			Elite::FPoint2 pixelPos{ float(c) + 0.5f, float(r) + 0.5f }; // + 0.5f for center of pixel
+			Elite::FPoint2 v0{ transformedVertices[0].Position.xy };
+			Elite::FPoint2 v1{ transformedVertices[1].Position.xy };
+			Elite::FPoint2 v2{ transformedVertices[2].Position.xy };
 
-			FPoint2 screenPoint{ pixelPos.x, pixelPos.y };
+			Elite::FPoint2 screenPoint{ pixelPos.x, pixelPos.y };
 
-			float w0 = Cross(v2 - v1, screenPoint - v1);
-			float w1 = Cross(v0 - v2, screenPoint - v2);
-			float w2 = Cross(v1 - v0, screenPoint - v0);
+			float w0 = Elite::Cross(v2 - v1, screenPoint - v1);
+			float w1 = Elite::Cross(v0 - v2, screenPoint - v2);
+			float w2 = Elite::Cross(v1 - v0, screenPoint - v0);
 
 			if (IsPointInTriangle(w0, w1, w2))
 			{
@@ -434,18 +425,16 @@ void Elite::Renderer::RenderTriangle(Triangle* pTriangle) const
 					m_DepthBuffer[c + r * m_Width] = zDepth;
 
 					// Pixel data interpolations
-					FVector2 interpolatedUV{ (transformedVertices[0].UV / transformedVertices[0].Position.w * w0 + transformedVertices[1].UV / transformedVertices[1].Position.w * w1 + transformedVertices[2].UV / transformedVertices[2].Position.w * w2) * wInterpolated };
-					FVector3 interpolatedNormal{ (transformedVertices[0].Normal / transformedVertices[0].Position.w * w0 + transformedVertices[1].Normal / transformedVertices[1].Position.w * w1 + transformedVertices[2].Normal / transformedVertices[2].Position.w * w2) * wInterpolated };
-					interpolatedNormal = GetNormalized(interpolatedNormal);
-
-					FVector3 interpolatedTangent{ (transformedVertices[0].Tangent / transformedVertices[0].Position.w * w0 + transformedVertices[1].Tangent / transformedVertices[1].Position.w * w1 + transformedVertices[2].Tangent / transformedVertices[2].Position.w * w2) * wInterpolated };
-					interpolatedTangent = GetNormalized(interpolatedTangent);
-
-					FMatrix3 tangentSpaceAxis{ interpolatedTangent, Elite::Cross(interpolatedNormal, interpolatedTangent), interpolatedNormal };
-					RGBColor normalSample{ m_pNormalMap->Sample(interpolatedUV) };
-					FVector3 trueNormal{ tangentSpaceAxis * FVector3{ 2 * normalSample.r - 1, 2 * normalSample.g - 1, 2 * normalSample.b - 1 } };
+					Elite::FVector2 interpolatedUV{ (transformedVertices[0].UV / transformedVertices[0].Position.w * w0 + transformedVertices[1].UV / transformedVertices[1].Position.w * w1 + transformedVertices[2].UV / transformedVertices[2].Position.w * w2) * wInterpolated };
+					Elite::FVector3 interpolatedNormal{ (transformedVertices[0].Normal / transformedVertices[0].Position.w * w0 + transformedVertices[1].Normal / transformedVertices[1].Position.w * w1 + transformedVertices[2].Normal / transformedVertices[2].Position.w * w2) * wInterpolated };
+					interpolatedNormal = Elite::GetNormalized(interpolatedNormal);
+					Elite::FVector3 interpolatedTangent{ (transformedVertices[0].Tangent / transformedVertices[0].Position.w * w0 + transformedVertices[1].Tangent / transformedVertices[1].Position.w * w1 + transformedVertices[2].Tangent / transformedVertices[2].Position.w * w2) * wInterpolated };
+					interpolatedTangent = Elite::GetNormalized(interpolatedTangent);
+					Elite::FMatrix3 tangentSpaceAxis{ interpolatedTangent, Elite::Cross(interpolatedNormal, interpolatedTangent), interpolatedNormal };
+					Elite::RGBColor normalSample{ m_pNormalMap->Sample(interpolatedUV) };
+					Elite::FVector3 trueNormal{ tangentSpaceAxis * FVector3{ 2 * normalSample.r - 1, 2 * normalSample.g - 1, 2 * normalSample.b - 1 } };
 					FVector3 interpolatedViewDirection{ (transformedVertices[0].viewDirection / pTriangle->GetColoredVertices()[0].Position.w * w0 + transformedVertices[1].viewDirection / pTriangle->GetColoredVertices()[1].Position.w * w1 + transformedVertices[2].viewDirection / pTriangle->GetColoredVertices()[2].Position.w * w2) * wInterpolated };
-					interpolatedViewDirection = GetNormalized(interpolatedViewDirection);
+					interpolatedViewDirection = Elite::GetNormalized(interpolatedViewDirection);
 
 					color = PixelShader(m_pDiffuseMap->Sample(interpolatedUV), m_pSpecularMap->Sample(interpolatedUV), Elite::RGBColor{ 0.025f, 0.025f, 0.025f }, m_pGlossinessMap->Sample(interpolatedUV).r, trueNormal, interpolatedViewDirection);
 
@@ -465,12 +454,12 @@ void Elite::Renderer::VertexShader(const std::vector<Vertex_Input>& inputVertice
 {
 	//outputVertices = inputVertices;
 	outputVertices.resize(inputVertices.size());
-	for (size_t i {}; i < inputVertices.size(); i++)
+	for (size_t i = 0; i < inputVertices.size(); i++)
 	{
-		auto rotMatrix{ MakeRotationY(m_Angle) };
+		auto rotMatrix{ Elite::MakeRotationY(m_Angle) };
 		outputVertices[i].Position = Elite::FPoint4(rotMatrix * inputVertices[i].Position.xyz + m_pVehicle->GetPosition()); // World transformation
-		outputVertices[i].Tangent = rotMatrix * inputVertices[i].Tangent;
-		outputVertices[i].Normal = rotMatrix * inputVertices[i].Normal;
+		outputVertices[i].Tangent = (rotMatrix * inputVertices[i].Tangent);
+		outputVertices[i].Normal = (rotMatrix * inputVertices[i].Normal);
 		outputVertices[i].UV = inputVertices[i].UV;
 		outputVertices[i].viewDirection = m_pCamera->GetPosition() - FVector3(outputVertices[i].Position.xyz);
 
@@ -481,19 +470,21 @@ void Elite::Renderer::VertexShader(const std::vector<Vertex_Input>& inputVertice
 	}
 }
 
-Elite::RGBColor Elite::Renderer::PixelShader(const RGBColor& diffuse, const RGBColor& specular, const RGBColor& ambient, float phongExponent, const FVector3& normal, const FVector3& viewDirection) const
+Elite::RGBColor Elite::Renderer::PixelShader(const Elite::RGBColor& diffuse, const Elite::RGBColor& specular, const Elite::RGBColor& ambient, float phongExponent, const Elite::FVector3& normal, const Elite::FVector3& viewDirection) const
 {
 	constexpr float shininess{ 25.0f };
 	const FVector3 lightDirection = { 0.577f, -0.577f, 0.577f };
 	constexpr float lightIntensity = 7.0f / float(E_PI);
-	const RGBColor lightColor = { 1.0f, 1.0f, 1.0f };
+	const Elite::RGBColor lightColor = { 1.0f, 1.0f, 1.0f };
 
-	RGBColor finalColor = diffuse * (lightColor * lightIntensity * std::max(Dot(-normal, lightDirection), 0.0f)) + ambient;
+	Elite::RGBColor finalColor = diffuse * (lightColor * lightIntensity * std::max(Elite::Dot(-normal, lightDirection), 0.0f)) + ambient;
 
-	const float dotProduct = Dot(lightDirection - 2 * Dot(normal, lightDirection) * normal, viewDirection);
+	const float dotProduct = Elite::Dot(lightDirection - (2 * Elite::Dot(normal, lightDirection) * normal), viewDirection);
 
 	if (dotProduct > 0)
+	{
 		finalColor += specular * std::powf(dotProduct, phongExponent * shininess);
+	}
 
 	finalColor.MaxToOne();
 
@@ -507,7 +498,7 @@ Elite::IVector4 Elite::Renderer::GetBoundingBox(const std::vector<Vertex_Input>&
 		// y = maxX
 		// z = minY
 		// w = maxY
-	IVector4 boundingBox{ INT_MAX, 0, INT_MAX, 0 };
+	Elite::IVector4 boundingBox{ INT_MAX, 0, INT_MAX, 0 };
 
 	for (const Vertex_Input& vertex : vertices)
 	{
@@ -531,13 +522,10 @@ bool Elite::Renderer::IsPointInTriangle(const float w0, const float w1, const fl
 	{
 	case CullMode::backface:
 		return (w0 <= 0 && w1 <= 0 && w2 <= 0);
-
 	case CullMode::frontface:
 		return (w0 >= 0 && w1 >= 0 && w2 >= 0);
-
 	case CullMode::none:
 		return ((w0 <= 0 && w1 <= 0 && w2 <= 0) || (w0 >= 0 && w1 >= 0 && w2 >= 0));
-
 	default:
 		return false;
 	}
