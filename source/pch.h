@@ -19,3 +19,8 @@
 //Elite headers
 #include "EMath.h"
 #include "ERGBColor.h"
+
+//Smart Pointers
+#include <memory>
+#include <wrl.h>
+using Microsoft::WRL::ComPtr, std::unique_ptr, std::make_unique;

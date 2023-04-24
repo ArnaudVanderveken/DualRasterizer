@@ -61,29 +61,29 @@ namespace Elite
 		float* m_DepthBuffer;
 		uint32_t* m_pBackBufferPixels = nullptr;
 
-		ID3D11Device* m_pDevice;
-		ID3D11DeviceContext* m_pDeviceContext;
-		IDXGIFactory* m_pDXGIFactory;
-		IDXGISwapChain* m_pSwapChain;
-		ID3D11Texture2D* m_pDepthStencilBuffer;
-		ID3D11DepthStencilView* m_pDepthStencilView;
-		ID3D11Resource* m_pRenderTargetBuffer;
-		ID3D11RenderTargetView* m_pRenderTargetView;
+		ComPtr<ID3D11Device> m_pDevice;
+		ComPtr<ID3D11DeviceContext> m_pDeviceContext;
+		ComPtr<IDXGIFactory> m_pDXGIFactory;
+		ComPtr<IDXGISwapChain> m_pSwapChain;
+		ComPtr<ID3D11Texture2D> m_pDepthStencilBuffer;
+		ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;
+		ComPtr<ID3D11Resource> m_pRenderTargetBuffer;
+		ComPtr<ID3D11RenderTargetView> m_pRenderTargetView;
 
 		SampleMode m_SampleMode = SampleMode::point;
 		CullMode m_CullMode = CullMode::backface;
 
 		// Meshes
 		//Vehicle
-		Mesh* m_pVehicle;
-		Texture* m_pDiffuseMap;
-		Texture* m_pNormalMap;
-		Texture* m_pSpecularMap;
-		Texture* m_pGlossinessMap;
+		unique_ptr<Mesh> m_pVehicle;
+		unique_ptr<Texture> m_pDiffuseMap;
+		unique_ptr<Texture> m_pNormalMap;
+		unique_ptr<Texture> m_pSpecularMap;
+		unique_ptr<Texture> m_pGlossinessMap;
 		//FireFX
 		bool m_ShowFireFX;
-		Mesh* m_pFireFX;
-		Texture* m_pFireFXDiffuse;
+		unique_ptr<Mesh> m_pFireFX;
+		unique_ptr<Texture> m_pFireFXDiffuse;
 
 		// Sampling
 		RasterMode m_RasterMode = RasterMode::hardware;

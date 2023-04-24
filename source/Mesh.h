@@ -22,7 +22,7 @@ public:
 
 	const Elite::FVector3& GetPosition() const { return m_Position; }
 
-	void Render(ID3D11DeviceContext*& pDeviceContext);
+	void Render(ID3D11DeviceContext* pDeviceContext);
 
 	void SetWorldViewMatrix(const float* pData);
 	void SetWorldMatrix(const float* pData);

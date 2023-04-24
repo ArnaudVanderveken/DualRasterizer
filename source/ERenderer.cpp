@@ -14,10 +14,10 @@ Elite::Renderer::Renderer(SDL_Window * pWindow, Elite::Camera* pCamera)
 	, m_Width{}
 	, m_Height{}
 	, m_IsInitialized{ false }
-	, m_pCamera{ pCamera }
+	, m_IsRotating{ true }
 	, m_Angle{}
 	, m_RotateSpeed{ -Elite::ToRadians(45.f) }
-	, m_IsRotating{ true }
+	, m_pCamera{ pCamera }
 	, m_ShowFireFX{ true }
 {
 	int width, height = 0;
@@ -29,16 +29,16 @@ Elite::Renderer::Renderer(SDL_Window * pWindow, Elite::Camera* pCamera)
 	m_DepthBuffer = new float[width * height]{};
 	ResetDepthBuffer();
 	m_pBackBuffer = SDL_CreateRGBSurface(0, m_Width, m_Height, 32, 0, 0, 0, 0);
-	m_pBackBufferPixels = (uint32_t*)m_pBackBuffer->pixels;
+	m_pBackBufferPixels = static_cast<uint32_t*>(m_pBackBuffer->pixels);
 
 	InitializeDirectX();
 	
 	// Vehicle
-	m_pVehicle = new Mesh(m_pDevice, "Resources/vehicle.obj", FVector3(0,0,50));
-	m_pDiffuseMap = new Texture("Resources/vehicle_diffuse.png", m_pDevice);
-	m_pNormalMap = new Texture("Resources/vehicle_normal.png", m_pDevice);
-	m_pSpecularMap = new Texture("Resources/vehicle_specular.png", m_pDevice);
-	m_pGlossinessMap = new Texture("Resources/vehicle_gloss.png", m_pDevice);
+	m_pVehicle = make_unique<Mesh>(m_pDevice.Get(), "Resources/vehicle.obj", FVector3(0, 0, 50));
+	m_pDiffuseMap = make_unique<Texture>("Resources/vehicle_diffuse.png", m_pDevice.Get());
+	m_pNormalMap = make_unique<Texture>("Resources/vehicle_normal.png", m_pDevice.Get());
+	m_pSpecularMap = make_unique<Texture>("Resources/vehicle_specular.png", m_pDevice.Get());
+	m_pGlossinessMap = make_unique<Texture>("Resources/vehicle_gloss.png", m_pDevice.Get());
 
 	m_pVehicle->SetDiffuseMap(m_pDiffuseMap->GetResourceView());
 	m_pVehicle->SetNormalMap(m_pNormalMap->GetResourceView());
@@ -46,8 +46,8 @@ Elite::Renderer::Renderer(SDL_Window * pWindow, Elite::Camera* pCamera)
 	m_pVehicle->SetGlossinessMap(m_pGlossinessMap->GetResourceView());
 
 	// FireFX
-	m_pFireFX = new Mesh(m_pDevice, "Resources/fireFX.obj", FVector3(0,0,50), true);
-	m_pFireFXDiffuse = new Texture("Resources/fireFX_diffuse.png", m_pDevice);
+	m_pFireFX = make_unique<Mesh>(m_pDevice.Get(), "Resources/fireFX.obj", FVector3(0,0,50), true);
+	m_pFireFXDiffuse = make_unique<Texture>("Resources/fireFX_diffuse.png", m_pDevice.Get());
 
 	m_pFireFX->SetDiffuseMap(m_pFireFXDiffuse->GetResourceView());
 }
@@ -57,30 +57,6 @@ Elite::Renderer::~Renderer()
 	// SoftwareRasterizer
 	delete[] m_DepthBuffer;
 
-	// DirectX
-	if (m_pVehicle) delete m_pVehicle;
-	if (m_pDiffuseMap) delete m_pDiffuseMap;
-	if (m_pNormalMap) delete m_pNormalMap;
-	if (m_pSpecularMap) delete m_pSpecularMap;
-	if (m_pGlossinessMap) delete m_pGlossinessMap;
-
-	if (m_pFireFX) delete m_pFireFX;
-	if (m_pFireFXDiffuse) delete m_pFireFXDiffuse;
-
-	if (m_pRenderTargetView) m_pRenderTargetView->Release();
-	if (m_pRenderTargetBuffer) m_pRenderTargetBuffer->Release();
-	if (m_pDepthStencilView) m_pDepthStencilView->Release();
-	if (m_pDepthStencilBuffer) m_pDepthStencilBuffer->Release();
-	if (m_pSwapChain) m_pSwapChain->Release();
-	if (m_pDXGIFactory) m_pDXGIFactory->Release();
-
-	if (m_pDeviceContext) 
-	{
-		m_pDeviceContext->ClearState();
-		m_pDeviceContext->Flush();
-		m_pDeviceContext->Release();
-	}
-	if (m_pDevice) m_pDevice->Release();
 }
 
 void Elite::Renderer::Render()
@@ -92,8 +68,8 @@ void Elite::Renderer::Render()
 
 		//Clear Buffers
 		RGBColor clearColor = RGBColor(0.1f, 0.1f, 0.1f);
-		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, &clearColor.r);
-		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView.Get(), &clearColor.r);
+		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		// Initialize Variables
 		FVector3 vehiclePos = m_pVehicle->GetPosition();
@@ -109,14 +85,14 @@ void Elite::Renderer::Render()
 		m_pVehicle->SetWorldViewMatrix(reinterpret_cast<float*>(worldViewPort.data));
 		m_pVehicle->SetWorldMatrix(reinterpret_cast<float*>(world.data));
 		m_pVehicle->SetViewInverseMatrix(reinterpret_cast<float*>(viewInv.data));
-		m_pVehicle->Render(m_pDeviceContext);
+		m_pVehicle->Render(m_pDeviceContext.Get());
 
 		if (m_ShowFireFX)
 		{
 			m_pFireFX->SetWorldViewMatrix(reinterpret_cast<float*>(worldViewPort.data));
 			m_pFireFX->SetWorldMatrix(reinterpret_cast<float*>(world.data));
 			m_pFireFX->SetViewInverseMatrix(reinterpret_cast<float*>(viewInv.data));
-			m_pFireFX->Render(m_pDeviceContext);
+			m_pFireFX->Render(m_pDeviceContext.Get());
 		}
 
 		//Present
@@ -131,7 +107,7 @@ void Elite::Renderer::Render()
 		// Reset to black
 		SDL_FillRect(m_pBackBuffer, nullptr, 0xFF1A1A1A);
 
-		RenderTriangleMesh(m_pVehicle);
+		RenderTriangleMesh(m_pVehicle.get());
 		//No Booster render in software rasterizer
 
 		SDL_UnlockSurface(m_pBackBuffer);
@@ -244,7 +220,7 @@ void Elite::Renderer::InitializeDirectX()
 		return;
 	}
 
-	result = CreateDXGIFactory(__uuidof(IDXGIFactory), reinterpret_cast<void**>(&m_pDXGIFactory));
+	result = CreateDXGIFactory(__uuidof(IDXGIFactory), &m_pDXGIFactory);
 	if (FAILED(result))
 	{
 		std::cout << "Error while creating the Factory!" << std::endl;
@@ -272,7 +248,7 @@ void Elite::Renderer::InitializeDirectX()
 	SDL_GetWindowWMInfo(m_pWindow, &sysWMInfo);
 	swapChainDesc.OutputWindow = sysWMInfo.info.win.window;
 
-	result = m_pDXGIFactory->CreateSwapChain(m_pDevice, &swapChainDesc, &m_pSwapChain);
+	result = m_pDXGIFactory->CreateSwapChain(m_pDevice.Get(), &swapChainDesc, &m_pSwapChain);
 	if (FAILED(result))
 	{
 		std::cout << "Error while creating the Swap Chain!" << std::endl;
@@ -303,7 +279,7 @@ void Elite::Renderer::InitializeDirectX()
 		std::cout << "Error while creating DepthStencil" << std::endl;
 		return;
 	}
-	result = m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer, &depthStencilViewDesc, &m_pDepthStencilView);
+	result = m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), &depthStencilViewDesc, &m_pDepthStencilView);
 	if (FAILED(result))
 	{
 		std::cout << "Error while creating DepthStencilView" << std::endl;
@@ -311,13 +287,13 @@ void Elite::Renderer::InitializeDirectX()
 	}
 
 	// Create the RenderTargetView
-	result = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_pRenderTargetBuffer));
+	result = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &m_pRenderTargetBuffer);
 	if (FAILED(result))
 	{
 		std::cout << "Error while creating RenderTargetBuffer" << std::endl;
 		return;
 	}
-	result = m_pDevice->CreateRenderTargetView(m_pRenderTargetBuffer, 0, &m_pRenderTargetView);
+	result = m_pDevice->CreateRenderTargetView(m_pRenderTargetBuffer.Get(), 0, &m_pRenderTargetView);
 	if (FAILED(result))
 	{
 		std::cout << "Error while creating RenderTargetView" << std::endl;
@@ -325,7 +301,7 @@ void Elite::Renderer::InitializeDirectX()
 	}
 
 	// Bind the views to the output merger stage
-	m_pDeviceContext->OMSetRenderTargets(1, &m_pRenderTargetView, m_pDepthStencilView);
+	m_pDeviceContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
 
 	D3D11_VIEWPORT viewport{};
 	viewport.Width = static_cast<float>(m_Width);

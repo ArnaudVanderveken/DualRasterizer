@@ -159,7 +159,7 @@ Mesh::~Mesh()
 	delete m_pEffect;
 }
 
-void Mesh::Render(ID3D11DeviceContext*& pDeviceContext)
+void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 {
 	//Set vertex buffer
 	UINT stride = sizeof(Vertex_Input);
