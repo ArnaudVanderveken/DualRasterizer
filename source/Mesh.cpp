@@ -2,24 +2,13 @@
 #include "Mesh.h" 
 #include "EObjParser.h"
 
-Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVector3 position, bool isTransparent)
+Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVector3& position, bool isTransparent)
 	: m_Position{ position }
-	, m_pEffect{}
-	, m_pVertexLayout{}
-	, m_pVertexBuffer{}
-	, m_pIndexBuffer{}
 	, m_AmountIndices{}
-	, m_pMatWorldViewProjVariable{}
-	, m_pMatWorldVariable{}
-	, m_pMatViewInverseVariable{}
-	, m_pDiffuseMapVariable{}
-	, m_pNormalMapVariable{}
-	, m_pSpecularMapVariable{}
-	, m_pGlossinessMapVariable{}
 	, m_pTriangle{ make_unique<Triangle>(Elite::FPoint3(position)) }
 {
 	
-	if (!Elite::ParseOBJ(filePath, position, m_SWVertexBuffer, m_SWIndexBuffer))
+	if (!ParseOBJ(filePath, position, m_SWVertexBuffer, m_SWIndexBuffer))
 	{
 		std::cout << "Parsing error with file " << filePath << std::endl;
 		return;
@@ -32,7 +21,7 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVec
 
 	//Create Vertex Layout
 	HRESULT result = S_OK;
-	static const uint32_t numElements{ 5 };
+	static constexpr uint32_t numElements{ 5 };
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
 
 	// Position
@@ -66,7 +55,7 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVec
 	vertexDesc[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
 	//Create input layout
-	D3DX11_PASS_DESC passDesc;
+	D3DX11_PASS_DESC passDesc{};
 	m_pEffect->GetTechnique()->GetPassByIndex(0)->GetDesc(&passDesc);
 	result = pDevice->CreateInputLayout(
 		vertexDesc,
@@ -74,6 +63,7 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVec
 		passDesc.pIAInputSignature,
 		passDesc.IAInputSignatureSize,
 		&m_pVertexLayout);
+
 	if (FAILED(result)) 
 	{
 		std::cout << "Error when creating InputLayout!" << std::endl;
@@ -81,13 +71,13 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVec
 	}
 
 	//Create vertex buffer
-	D3D11_BUFFER_DESC bd = {};
+	D3D11_BUFFER_DESC bd{};
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
-	bd.ByteWidth = sizeof(Vertex_Input) * (uint32_t)m_SWVertexBuffer.size();
+	bd.ByteWidth = sizeof(Vertex_Input) * static_cast<uint32_t>(m_SWVertexBuffer.size());
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 	bd.MiscFlags = 0;
-	D3D11_SUBRESOURCE_DATA initData = { 0 };
+	D3D11_SUBRESOURCE_DATA initData{};
 	initData.pSysMem = m_SWVertexBuffer.data();
 	result = pDevice->CreateBuffer(&bd, &initData, &m_pVertexBuffer);
 	if (FAILED(result))
@@ -97,7 +87,7 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVec
 	}
 
 	//Create index buffer
-	m_AmountIndices = (uint32_t)m_SWIndexBuffer.size();
+	m_AmountIndices = static_cast<uint32_t>(m_SWIndexBuffer.size());
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
 	bd.ByteWidth = sizeof(uint32_t) * m_AmountIndices;
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -143,8 +133,8 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVec
 void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 {
 	//Set vertex buffer
-	UINT stride = sizeof(Vertex_Input);
-	UINT offset = 0;
+	constexpr UINT stride = sizeof(Vertex_Input);
+	constexpr UINT offset = 0;
 	pDeviceContext->IASetVertexBuffers(0, 1, m_pVertexBuffer.GetAddressOf(), &stride, &offset);
 
 	//Set index buffer
@@ -157,54 +147,54 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	//Render a triangle
-	m_pEffect->GetTechnique()->GetPassByIndex((int)m_CullMode)->Apply(0, pDeviceContext);
+	m_pEffect->GetTechnique()->GetPassByIndex(static_cast<int>(m_CullMode))->Apply(0, pDeviceContext);
 	pDeviceContext->DrawIndexed(m_AmountIndices, 0, 0);
 }
 
-void Mesh::SetWorldViewMatrix(const float* pData)
+void Mesh::SetWorldViewMatrix(const float* pData) const
 {
 	m_pMatWorldViewProjVariable->SetMatrix(pData);
 }
 
-void Mesh::SetWorldMatrix(const float* pData)
+void Mesh::SetWorldMatrix(const float* pData) const
 {
 	m_pMatWorldVariable->SetMatrix(pData);
 }
 
-void Mesh::SetViewInverseMatrix(const float* pData)
+void Mesh::SetViewInverseMatrix(const float* pData) const
 {
 	m_pMatViewInverseVariable->SetMatrix(pData);
 }
 
-void Mesh::SetDiffuseMap(ID3D11ShaderResourceView* pResourceView)
+void Mesh::SetDiffuseMap(ID3D11ShaderResourceView* pResourceView) const
 {
 	if (m_pDiffuseMapVariable->IsValid())
 		m_pDiffuseMapVariable->SetResource(pResourceView);
 	else std::cout << "Invalid DiffuseMap." << std::endl;
 }
 
-void Mesh::SetNormalMap(ID3D11ShaderResourceView* pResourceView)
+void Mesh::SetNormalMap(ID3D11ShaderResourceView* pResourceView) const
 {
 	if (m_pNormalMapVariable->IsValid())
 		m_pNormalMapVariable->SetResource(pResourceView);
 	else std::cout << "Invalid NormalMap." << std::endl;
 }
 
-void Mesh::SetSpecularMap(ID3D11ShaderResourceView* pResourceView)
+void Mesh::SetSpecularMap(ID3D11ShaderResourceView* pResourceView) const
 {
 	if (m_pSpecularMapVariable->IsValid())
 		m_pSpecularMapVariable->SetResource(pResourceView);
 	else std::cout << "Invalid SpecularMap." << std::endl;
 }
 
-void Mesh::SetGlossinessMap(ID3D11ShaderResourceView* pResourceView)
+void Mesh::SetGlossinessMap(ID3D11ShaderResourceView* pResourceView) const
 {
 	if (m_pGlossinessMapVariable->IsValid())
 		m_pGlossinessMapVariable->SetResource(pResourceView);
 	else std::cout << "Invalid GlosinessMap." << std::endl;
 }
 
-void Mesh::SetTextureSamplingState(SampleMode renderTechnique)
+void Mesh::SetTextureSamplingState(SampleMode renderTechnique) const
 {
 	m_pEffect->SetTechnique(renderTechnique);
 }
@@ -229,7 +219,7 @@ Triangle* Mesh::GetTriangle() const
 	return m_pTriangle.get();
 }
 
-void Mesh::SetTemplateVertices(const std::vector<Vertex_Input>& vertices)
+void Mesh::SetTemplateVertices(const std::vector<Vertex_Input>& vertices) const
 {
 	m_pTriangle->SetLocalVertices(vertices);
 }

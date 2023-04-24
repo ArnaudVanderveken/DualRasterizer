@@ -12,7 +12,7 @@
 class Mesh final
 {
 public:
-	Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVector3 position, bool isTransparent = false);
+	Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVector3& position, bool isTransparent = false);
 	~Mesh() = default;
 
 	Mesh(const Mesh&) = delete;
@@ -20,26 +20,26 @@ public:
 	Mesh& operator=(const Mesh&) = delete;
 	Mesh& operator=(Mesh&&) noexcept = delete;
 
-	const Elite::FVector3& GetPosition() const { return m_Position; }
+	[[nodiscard]] const Elite::FVector3& GetPosition() const { return m_Position; }
 
 	void Render(ID3D11DeviceContext* pDeviceContext);
 
-	void SetWorldViewMatrix(const float* pData);
-	void SetWorldMatrix(const float* pData);
-	void SetViewInverseMatrix(const float* pData);
+	void SetWorldViewMatrix(const float* pData) const;
+	void SetWorldMatrix(const float* pData) const;
+	void SetViewInverseMatrix(const float* pData) const;
 
-	void SetDiffuseMap(ID3D11ShaderResourceView* pResourceView);
-	void SetNormalMap(ID3D11ShaderResourceView* pResourceView);
-	void SetSpecularMap(ID3D11ShaderResourceView* pResourceView);
-	void SetGlossinessMap(ID3D11ShaderResourceView* pResourceView);
-	void SetTextureSamplingState(SampleMode renderTechnique);
+	void SetDiffuseMap(ID3D11ShaderResourceView* pResourceView) const;
+	void SetNormalMap(ID3D11ShaderResourceView* pResourceView) const;
+	void SetSpecularMap(ID3D11ShaderResourceView* pResourceView) const;
+	void SetGlossinessMap(ID3D11ShaderResourceView* pResourceView) const;
+	void SetTextureSamplingState(SampleMode renderTechnique) const;
 
 	void SetCullMode(CullMode cullMode);
 
-	const std::vector<uint32_t>& GetIndexBuffer() const;
-	const std::vector<Vertex_Input>& GetVertexBuffer() const;
-	Triangle* GetTriangle() const;
-	void SetTemplateVertices(const std::vector<Vertex_Input>& localVertices);
+	[[nodiscard]] const std::vector<uint32_t>& GetIndexBuffer() const;
+	[[nodiscard]] const std::vector<Vertex_Input>& GetVertexBuffer() const;
+	[[nodiscard]] Triangle* GetTriangle() const;
+	void SetTemplateVertices(const std::vector<Vertex_Input>& localVertices) const;
 
 private:
 	Elite::FVector3 m_Position;
