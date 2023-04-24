@@ -36,8 +36,8 @@ int main(int argc, char* args[])
 	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	const uint32_t width = 640;
-	const uint32_t height = 480;
+	constexpr uint32_t width = 640;
+	constexpr uint32_t height = 480;
 	SDL_Window* pWindow = SDL_CreateWindow(
 		"DualRasterizer - Vanderveken Arnaud",
 		SDL_WINDOWPOS_UNDEFINED,
@@ -48,11 +48,11 @@ int main(int argc, char* args[])
 		return 1;
 
 	//Initialize My Classes
-	auto pCamera{ std::make_unique<Elite::Camera>((float)width, (float)height) };
+	const auto pCamera{ std::make_unique<Elite::Camera>(static_cast<float>(width), static_cast<float>(height)) };
 
 	//Initialize "framework"
-	auto pTimer{ std::make_unique<Elite::Timer>() };
-	auto pRenderer{ std::make_unique<Elite::Renderer>(pWindow, pCamera.get()) };
+	const auto pTimer{ std::make_unique<Elite::Timer>() };
+	const auto pRenderer{ std::make_unique<Elite::Renderer>(pWindow, pCamera.get()) };
 
 	DisplayControls();
 
@@ -78,19 +78,29 @@ int main(int argc, char* args[])
 					case SDL_SCANCODE_E:
 						pRenderer->SwitchRenderMode();
 						break;
+
 					case SDL_SCANCODE_C:
 						pRenderer->SwitchCullMode();
 						break;
+
 					case SDL_SCANCODE_F:
 						pRenderer->SwitchSampleFilter();
 						break;
+
 					case SDL_SCANCODE_R:
 						pRenderer->ToggleRotating();
 						break;
+
 					case SDL_SCANCODE_T:
 						pRenderer->ToggleFireFX();
 						break;
+
+					default:
+						break;
 					}
+					break;
+
+				default:
 					break;
 			}
 		}
