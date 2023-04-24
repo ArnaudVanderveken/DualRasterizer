@@ -12,7 +12,7 @@ std::vector<Elite::FPoint4> Triangle::GetVerticesWorldPositions()
 	std::vector<Elite::FPoint4> positions;
 
 	for (Vertex_Input& vertex : m_TriangleVertices)
-		positions.push_back(Elite::FPoint4{ vertex.Position + Elite::FVector4(Elite::FVector3(m_Position), 0.0f) });
+		positions.emplace_back(Elite::FPoint4{ vertex.Position + Elite::FVector4(Elite::FVector3(m_Position), 0.0f) });
 
 	return positions;
 }
