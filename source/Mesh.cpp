@@ -1,25 +1,22 @@
-#pragma once
 #include "pch.h"
 #include "Mesh.h" 
 #include "EObjParser.h"
 
 Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVector3 position, bool isTransparent)
-	: m_pIndexBuffer{}
-	, m_pVertexBuffer{}
-	, m_pVertexLayout{}
+	: m_Position{ position }
 	, m_pEffect{}
+	, m_pVertexLayout{}
+	, m_pVertexBuffer{}
+	, m_pIndexBuffer{}
 	, m_AmountIndices{}
+	, m_pMatWorldViewProjVariable{}
+	, m_pMatWorldVariable{}
+	, m_pMatViewInverseVariable{}
 	, m_pDiffuseMapVariable{}
 	, m_pNormalMapVariable{}
 	, m_pSpecularMapVariable{}
 	, m_pGlossinessMapVariable{}
-	, m_pMatViewInverseVariable{}
-	, m_pMatWorldVariable{}
-	, m_pMatWorldViewProjVariable{}
-	, m_Position{ position }
-
-	, m_pTriangle{ new Triangle{Elite::FPoint3(position)}}
-
+	, m_pTriangle{ make_unique<Triangle>(Elite::FPoint3(position)) }
 {
 	
 	if (!Elite::ParseOBJ(filePath, position, m_SWVertexBuffer, m_SWIndexBuffer))
@@ -28,8 +25,10 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVec
 		return;
 	}
 
-	if (!isTransparent) m_pEffect = new Effect(pDevice, L"Resources/PosCol3D.fx");
-	else  m_pEffect = new EffectPartialCoverage(pDevice, L"Resources/FireFX.fx");
+	if (!isTransparent)
+		m_pEffect = make_unique<Effect>(pDevice, L"Resources/PosCol3D.fx");
+	else 
+		m_pEffect = make_unique<EffectPartialCoverage>(pDevice, L"Resources/FireFX.fx");
 
 	//Create Vertex Layout
 	HRESULT result = S_OK;
@@ -141,36 +140,18 @@ Mesh::Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVec
 		std::cout << "m_pGlossinessMapVariable not valid.\n";
 }
 
-Mesh::~Mesh()
-{
-	// SoftwareRasterizer
-	delete m_pTriangle;
-
-	// DirectX
-	m_pIndexBuffer->Release();
-	m_pVertexBuffer->Release();
-	m_pVertexLayout->Release();
-
-	m_pMatWorldViewProjVariable->Release();
-	m_pDiffuseMapVariable->Release();
-	m_pNormalMapVariable->Release();
-	m_pSpecularMapVariable->Release();
-	m_pGlossinessMapVariable->Release();
-	delete m_pEffect;
-}
-
 void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 {
 	//Set vertex buffer
 	UINT stride = sizeof(Vertex_Input);
 	UINT offset = 0;
-	pDeviceContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+	pDeviceContext->IASetVertexBuffers(0, 1, m_pVertexBuffer.GetAddressOf(), &stride, &offset);
 
 	//Set index buffer
-	pDeviceContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	pDeviceContext->IASetIndexBuffer(m_pIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 	//Set the input layout
-	pDeviceContext->IASetInputLayout(m_pVertexLayout);
+	pDeviceContext->IASetInputLayout(m_pVertexLayout.Get());
 
 	//Set primitive topology
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -245,7 +226,7 @@ const std::vector<Vertex_Input>& Mesh::GetVertexBuffer() const
 
 Triangle* Mesh::GetTriangle() const
 {
-	return m_pTriangle;
+	return m_pTriangle.get();
 }
 
 void Mesh::SetTemplateVertices(const std::vector<Vertex_Input>& vertices)

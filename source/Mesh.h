@@ -13,7 +13,7 @@ class Mesh final
 {
 public:
 	Mesh(ID3D11Device* pDevice, const std::string& filePath, const Elite::FVector3 position, bool isTransparent = false);
-	~Mesh();
+	~Mesh() = default;
 
 	Mesh(const Mesh&) = delete;
 	Mesh(Mesh&&) noexcept = delete;
@@ -44,23 +44,23 @@ public:
 private:
 	Elite::FVector3 m_Position;
 
-	BaseEffect* m_pEffect;
-	ID3D11InputLayout* m_pVertexLayout;
-	ID3D11Buffer* m_pVertexBuffer;
-	ID3D11Buffer* m_pIndexBuffer;
+	unique_ptr<BaseEffect> m_pEffect;
+	ComPtr<ID3D11InputLayout> m_pVertexLayout;
+	ComPtr<ID3D11Buffer> m_pVertexBuffer;
+	ComPtr<ID3D11Buffer> m_pIndexBuffer;
 	uint32_t m_AmountIndices;
 
-	ID3DX11EffectMatrixVariable* m_pMatWorldViewProjVariable;
-	ID3DX11EffectMatrixVariable* m_pMatWorldVariable;
-	ID3DX11EffectMatrixVariable* m_pMatViewInverseVariable;
-	ID3DX11EffectShaderResourceVariable* m_pDiffuseMapVariable;
-	ID3DX11EffectShaderResourceVariable* m_pNormalMapVariable;
-	ID3DX11EffectShaderResourceVariable* m_pSpecularMapVariable;
-	ID3DX11EffectShaderResourceVariable* m_pGlossinessMapVariable;
+	ComPtr<ID3DX11EffectMatrixVariable> m_pMatWorldViewProjVariable;
+	ComPtr<ID3DX11EffectMatrixVariable> m_pMatWorldVariable;
+	ComPtr<ID3DX11EffectMatrixVariable> m_pMatViewInverseVariable;
+	ComPtr<ID3DX11EffectShaderResourceVariable> m_pDiffuseMapVariable;
+	ComPtr<ID3DX11EffectShaderResourceVariable> m_pNormalMapVariable;
+	ComPtr<ID3DX11EffectShaderResourceVariable> m_pSpecularMapVariable;
+	ComPtr<ID3DX11EffectShaderResourceVariable> m_pGlossinessMapVariable;
 
 	CullMode m_CullMode = CullMode::backface;
 
-	Triangle* m_pTriangle;
+	unique_ptr<Triangle> m_pTriangle;
 	std::vector<uint32_t> m_SWIndexBuffer;
 	std::vector<Vertex_Input> m_SWVertexBuffer;
 };
