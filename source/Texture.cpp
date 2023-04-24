@@ -37,7 +37,7 @@ Texture::Texture(const std::string& filePath, ID3D11Device* pDevice)
 	SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	SRVDesc.Texture2D.MipLevels = 1;
 
-	result = pDevice->CreateShaderResourceView(m_pTexture, &SRVDesc, &m_pTextureResourceView);
+	result = pDevice->CreateShaderResourceView(m_pTexture.Get(), &SRVDesc, &m_pTextureResourceView);
 	if (FAILED(result))
 	{
 		std::cout << "Error creating ShaderResourceView with file " << filePath << std::endl;
@@ -47,28 +47,26 @@ Texture::Texture(const std::string& filePath, ID3D11Device* pDevice)
 
 Texture::~Texture()
 {
-	m_pTextureResourceView->Release();
-	m_pTexture->Release();
 	SDL_FreeSurface(m_pSurface);
 }
 
 ID3D11ShaderResourceView* Texture::GetResourceView() const
 {
-	return m_pTextureResourceView;
+	return m_pTextureResourceView.Get();
 }
 
 ID3D11Texture2D* Texture::GetTexture() const
 {
-	return m_pTexture;
+	return m_pTexture.Get();
 }
 
-Elite::RGBColor Texture::Sample(const Elite::FVector2& uv)
+Elite::RGBColor Texture::Sample(const Elite::FVector2& uv) const
 {
 	Uint8 r;
 	Uint8 g;
 	Uint8 b;
 
-	SDL_GetRGB(((uint32_t*)m_pSurface->pixels)[PixelToIndex(uv)], m_pSurface->format, &r, &g, &b);
+	SDL_GetRGB(static_cast<uint32_t*>(m_pSurface->pixels)[PixelToIndex(uv)], m_pSurface->format, &r, &g, &b);
 
 	return Elite::RGBColor{ r / 255.f, g / 255.f, b / 255.f };
 }
