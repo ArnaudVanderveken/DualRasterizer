@@ -26,17 +26,17 @@ namespace Elite
 		void Update(float elapsedSec);
 
 		void SetWorldMatrix(const FMatrix4& matrix) { m_TransformMatrix = matrix; }
-		const FMatrix4& GetWorldToView() const { return m_WorldToView; }
-		const FMatrix4& GetViewToWorld() const { return m_ViewToWorld; }
-		const FMatrix4& GetWorldViewProjection() const;
-		const FMatrix4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
+		[[nodiscard]] const FMatrix4& GetWorldToView() const { return m_WorldToView; }
+		[[nodiscard]] const FMatrix4& GetViewToWorld() const { return m_ViewToWorld; }
+		[[nodiscard]] const FMatrix4& GetWorldViewProjection() const;
+		[[nodiscard]] const FMatrix4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 
-		const float GetFov() const { return m_Fov; }
+		[[nodiscard]] const float GetFov() const { return m_Fov; }
 
-		float GetFar() const { return m_Far; }
-		float GetNear() const { return m_Near; }
+		[[nodiscard]] float GetFar() const { return m_Far; }
+		[[nodiscard]] float GetNear() const { return m_Near; }
 
-		FVector3 GetPosition() const { return FVector3(m_Position); }
+		[[nodiscard]] FVector3 GetPosition() const { return FVector3(m_Position); }
 
 	private:
 		void CalculateLookAt();

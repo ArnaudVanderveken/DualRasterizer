@@ -5,9 +5,9 @@
 namespace Elite
 {
 	Camera::Camera(float width, float height, const FPoint3& position, const FVector3& viewForward, float fovAngle) :
+		m_Fov(tanf((fovAngle* float(E_TO_RADIANS)) / 2.f)),
 		m_Width{ width },
 		m_Height{ height },
-		m_Fov(tanf((fovAngle* float(E_TO_RADIANS)) / 2.f)),
 		m_Position{ position },
 		m_ViewForward{GetNormalized(-viewForward)}
 	{
@@ -17,21 +17,21 @@ namespace Elite
 		// Create ProjectionMatrix
 		const float aspectRatio = m_Width / m_Height;
 
-		m_ProjectionMatrix = Elite::FMatrix4{ 1 / aspectRatio / m_Fov, 0,         0,                        0,
-								              0,                       1 / m_Fov, 0,                        0,
-								              0,                       0,         m_Far / (m_Far - m_Near), -(m_Far * m_Near) / (m_Far - m_Near),
-								              0,                       0,         1,                        0 };
+		m_ProjectionMatrix = FMatrix4{ 1 / aspectRatio / m_Fov, 0,         0,                        0,
+						               0,                       1 / m_Fov, 0,                        0,
+						               0,                       0,         m_Far / (m_Far - m_Near), -(m_Far * m_Near) / (m_Far - m_Near),
+						               0,                       0,         1,                        0 };
 	}
 
 	void Camera::Update(float elapsedSec)
 	{
-		const float movementSpeed{ 3.f };
+		constexpr float movementSpeed{ 3.f };
 
 		//Capture Input (absolute) Rotation & (relative) Movement
 		//*************
 		//Keyboard Input
 		const uint8_t* pKeyboardState = SDL_GetKeyboardState(0);
-		float keyboardSpeed = pKeyboardState[SDL_SCANCODE_LSHIFT] ? m_KeyboardMoveSensitivity * m_KeyboardMoveMultiplier : m_KeyboardMoveSensitivity;
+		const float keyboardSpeed = pKeyboardState[SDL_SCANCODE_LSHIFT] ? m_KeyboardMoveSensitivity * m_KeyboardMoveMultiplier : m_KeyboardMoveSensitivity;
 		m_RelativeTranslation.x = (pKeyboardState[SDL_SCANCODE_D] - pKeyboardState[SDL_SCANCODE_A]) * keyboardSpeed * elapsedSec * movementSpeed;
 		m_RelativeTranslation.y = 0;
 		m_RelativeTranslation.z = (pKeyboardState[SDL_SCANCODE_W] - pKeyboardState[SDL_SCANCODE_S]) * keyboardSpeed * elapsedSec * movementSpeed;
@@ -40,7 +40,7 @@ namespace Elite
 
 		//Mouse Input
 		int x, y = 0;
-		uint32_t mouseState = SDL_GetRelativeMouseState(&x, &y);
+		const uint32_t mouseState = SDL_GetRelativeMouseState(&x, &y);
 		if (mouseState == SDL_BUTTON_LMASK)
 		{
 			m_RelativeTranslation.z += y * m_MouseMoveSensitivity * elapsedSec;
