@@ -23,8 +23,7 @@ void ShutDown(SDL_Window* pWindow)
 
 void DisplayControls()
 {
-	using std::cout;
-	using std::endl;
+	using std::cout, std::endl;
 	cout << "Controls:\n\tSwitch Renderer: E\n\tSwitch CullMode: C\n\tSwitch SampleFilter: F\n\tToggle Rotation: R\n\tToggle FireFX (DirectX only): T" << endl;
 }
 

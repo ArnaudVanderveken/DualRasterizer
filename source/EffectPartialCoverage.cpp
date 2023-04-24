@@ -24,7 +24,6 @@ EffectPartialCoverage::~EffectPartialCoverage()
 	m_pPointTechnique->Release();
 	m_pLinearTechnique->Release();
 	m_pAnisotropicTechnique->Release();
-	m_pEffect->Release();
 }
 
 void EffectPartialCoverage::SetTechnique(SampleMode renderTechnique)

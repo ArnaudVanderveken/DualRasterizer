@@ -18,10 +18,10 @@ namespace Elite
 {
 
 	//Just parses vertices and indices
-	static bool ParseOBJ(const std::string& filename, const Elite::FVector3 position, std::vector<Vertex_Input>& vertices, std::vector<uint32_t>& indices)
+	static bool ParseOBJ(const std::string& filename, const Elite::FVector3 /*position*/, std::vector<Vertex_Input>& vertices, std::vector<uint32_t>& indices)
 	{
 		std::ifstream file(filename);
-		if (!file)
+		if (!file.is_open())
 			return false;
 
 		std::vector<FPoint4> positions;

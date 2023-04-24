@@ -24,7 +24,6 @@ Effect::~Effect()
 	m_pPointTechnique->Release();
 	m_pLinearTechnique->Release();
 	m_pAnisotropicTechnique->Release();
-	m_pEffect->Release();
 }
 
 void Effect::SetTechnique(SampleMode renderTechnique)

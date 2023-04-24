@@ -6,7 +6,7 @@ class Effect final : public BaseEffect
 {
 public:
 	Effect(ID3D11Device* pDevice, std::wstring assetFile);
-	virtual ~Effect();
+	~Effect() override;
 
 	Effect(const Effect&) = delete;
 	Effect(Effect&&) noexcept = delete;
